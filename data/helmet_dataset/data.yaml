@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 2
+names: ['head', 'helmet']
+
+roboflow:
+  workspace: ultg-krian-8vtdl
+  project: head-helmet-ikwpz
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/ultg-krian-8vtdl/head-helmet-ikwpz/dataset/1
