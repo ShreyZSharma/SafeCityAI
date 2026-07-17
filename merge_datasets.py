@@ -9,10 +9,12 @@ MERGED_DIR = os.path.join(BASE, "merged_dataset")
 
 # Final class order
 # 0 = head, 1 = helmet, 2 = License_Plate
-PLATE_OLD_CLASS_ID = 0   # plate dataset's only class is currently id 0
-PLATE_NEW_CLASS_ID = 2   # we remap it to 2 in the merged dataset
+PLATE_OLD_CLASS_ID = 0
+PLATE_NEW_CLASS_ID = 2
 
-SPLITS = ["train", "valid"]  # helmet_dataset has no test folder, so we skip test
+SPLITS = ["train", "valid"]
+NEGATIVE_DIR = os.path.join(BASE, "negative_examples")
+NEGATIVE_VALID_FRACTION = 0.2  # ~20% of negatives go to valid, rest to train
 
 
 def ensure_dirs():
@@ -85,8 +87,43 @@ def copy_plate_split(split):
     print(f"[done] Copied plate {split}: {count} label files remapped to class {PLATE_NEW_CLASS_ID}")
 
 
+def copy_negative_examples():
+    src_img_dir = os.path.join(NEGATIVE_DIR, "images")
+    src_lbl_dir = os.path.join(NEGATIVE_DIR, "labels")
+
+    if not os.path.isdir(src_img_dir):
+        print(f"[skip] No negative examples folder found at {src_img_dir}")
+        return
+
+    all_images = [f for f in os.listdir(src_img_dir) if not f.startswith(".")]
+    split_point = int(len(all_images) * (1 - NEGATIVE_VALID_FRACTION))
+    train_images = all_images[:split_point]
+    valid_images = all_images[split_point:]
+
+    for split, images in [("train", train_images), ("valid", valid_images)]:
+        dst_img_dir = os.path.join(MERGED_DIR, split, "images")
+        dst_lbl_dir = os.path.join(MERGED_DIR, split, "labels")
+
+        for fname in images:
+            src_img_path = os.path.join(src_img_dir, fname)
+            dst_fname = f"neg_{fname}"
+            shutil.copy2(src_img_path, os.path.join(dst_img_dir, dst_fname))
+
+            label_fname = os.path.splitext(fname)[0] + ".txt"
+            src_lbl_path = os.path.join(src_lbl_dir, label_fname)
+            dst_lbl_path = os.path.join(dst_lbl_dir, f"neg_{label_fname}")
+
+            if os.path.exists(src_lbl_path):
+                shutil.copy2(src_lbl_path, dst_lbl_path)
+            else:
+                open(dst_lbl_path, "w").close()
+
+        print(f"[done] Copied {len(images)} negative examples to {split}")
+
+
 def write_merged_yaml():
-    yaml_content = """train: train/images
+    yaml_content = f"""path: ../data/merged_dataset
+train: train/images
 val: valid/images
 
 nc: 3
@@ -103,5 +140,6 @@ if __name__ == "__main__":
     for split in SPLITS:
         copy_helmet_split(split)
         copy_plate_split(split)
+    copy_negative_examples()
     write_merged_yaml()
     print("\nMerge complete. Check data/merged_dataset/ for the unified dataset.")
