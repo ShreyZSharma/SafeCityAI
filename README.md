@@ -10,25 +10,31 @@ This system detects three classes in traffic images/video:
 - **License_Plate** — vehicle license plates
 
 ## Results
-- **mAP@0.5:** 97.3%
-- **Precision:** 93.2%
-- **Recall:** 94.0%
+- **mAP@0.5:** 97.4%
+- **Precision:** 95.2%
+- **Recall:** 93.7%
 - Trained for 100 epochs on a merged, quality-verified dataset (~2,000+ head/helmet images,
-  ~450 license plate images) using YOLOv5s fine-tuned from COCO-pretrained weights.
+  ~450 license plate images, ~25 hard-negative examples) using YOLOv5s fine-tuned from
+  COCO-pretrained weights.
 
 ## Project Structure
+
 Pro1/
 ├── data/
 │   ├── plate_dataset/          # source license plate dataset
 │   ├── helmet_dataset/         # source head/helmet dataset
+│   ├── negative_examples/      # hard-negative examples (caps, turbans, decoys)
 │   └── merged_dataset/         # unified 3-class dataset used for training
 ├── yolov5/                     # YOLOv5 repo (training + inference code)
-│   └── runs/train/safecity_full/weights/best.pt   # trained model weights
+│   └── runs/train/safecity_v2/weights/best.pt   # trained model weights (latest)
 ├── merge_datasets.py           # merges source datasets into unified format
 ├── analyze_box_sizes.py        # dataset annotation quality checker
 ├── check_annotations.py        # visual bounding box verification tool
-├── server.py                  # FastAPI inference server
+├── create_negative_labels.py   # auto-generates empty labels for negative examples
+├── server.py                   # FastAPI inference server
+├── training_notebook.ipynb     # documented training process and results
 └── README.md
+
 ## Setup
 
 1. Create and activate a virtual environment:
@@ -78,7 +84,7 @@ Box format: `[x, y, width, height]` in pixel coordinates.
 ## Running Video Inference
 ```bash
 cd yolov5
-python detect.py --weights runs/train/safecity_full/weights/best.pt --img 640 --conf 0.5 --source path/to/video.mp4
+python detect.py --weights runs/train/safecity_v2/weights/best.pt --img 640 --conf 0.5 --source path/to/video.mp4
 ```
 
 ## Known Limitations
@@ -86,16 +92,19 @@ python detect.py --weights runs/train/safecity_full/weights/best.pt --img 640 --
   since training data primarily featured medium-to-close range subjects.
 - **Motion blur:** fast-moving vehicles can produce blurred license plates that the model
   struggles to detect reliably, as training data consisted of static images.
-- **Helmet vs. cap distinction:** the model can occasionally misclassify caps or other
-  head-worn items as helmets; more varied negative training examples would improve this.
-- **False positives on decoy objects:** objects with round/colorful shapes near head height
-  (e.g., decorations) have occasionally been misclassified as helmets. Addressing this would
-  require additional hard-negative training examples in a future iteration.
+- **Helmet vs. cap / decoy objects:** an earlier version of the model occasionally
+  misclassified caps, turbans, and round/colorful decoy objects (e.g., decorations near
+  head height) as helmets. This was mitigated by adding ~25 hard-negative training examples
+  (real-world images of caps, turbans, and similar objects with empty labels), which improved
+  precision from 93.2% to 95.2% while maintaining mAP@0.5 at ~97.4%. Some edge cases may
+  still occur; further improvement would benefit from a larger and more diverse set of
+  hard-negative examples.
 
 ## Future Improvements
-- Add hard-negative training examples (non-helmet round objects, caps/hats) to reduce
-  false positives.
+- Expand hard-negative examples further (more caps/hats, decorative objects, varied contexts)
+  to continue reducing false positives.
 - Expand dataset with more distant/small-scale and motion-blurred examples.
 - Add tracking (e.g., DeepSORT) for consistent multi-frame identification of violators
   in video streams.
 - Containerize the API (Docker) for easier deployment.
+- Build a simple frontend for interactive demonstration of detections.
