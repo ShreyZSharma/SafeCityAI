@@ -1,5 +1,5 @@
 venv/
 __pycache__/
 *.pyc
-runs/
-yolov5/runs/
+yolov5/runs/train/*/labels*
+yolov5/runs/detect/
