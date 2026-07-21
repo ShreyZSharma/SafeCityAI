@@ -6,7 +6,7 @@ from PIL import Image
 app = FastAPI(title="SafeCityAI Detection API")
 
 # ---- Load the trained YOLOv5 model once, at startup ----
-MODEL_PATH = "yolov5/runs/train/safecity_full/weights/best.pt"
+MODEL_PATH = "yolov5/runs/train/safecity_v2/weights/best.pt"
 
 model = torch.hub.load(
     "ultralytics/yolov5",
