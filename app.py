@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import torch
 
 st.set_page_config(page_title="SafeCityAI Detection Demo", layout="centered")
