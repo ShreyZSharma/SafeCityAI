@@ -15,7 +15,7 @@ def create_empty_labels():
         label_fname = os.path.splitext(fname)[0] + ".txt"
         label_path = os.path.join(LABELS_DIR, label_fname)
 
-        # Create an empty file (no bounding boxes = "nothing to detect here")
+        
         open(label_path, "w").close()
 
     print(f"[done] Created {len(image_files)} empty label files in '{LABELS_DIR}'")
